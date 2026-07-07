@@ -1,0 +1,33 @@
+name: Build Tailwind Tokens
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tokens.json"
+
+permissions:
+  contents: write
+
+jobs:
+  build-tokens:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 轉換 tokens.json → @theme CSS
+        run: node scripts/build-tokens.js
+
+      - name: Commit 產生的 CSS
+        run: |
+          git config user.name "token-bot"
+          git config user.email "token-bot@users.noreply.github.com"
+          git add styles/tokens-theme.css
+          git diff --cached --quiet && echo "沒有變動，略過 commit" || git commit -m "chore: 自動重新產生 tailwind tokens"
+          git push
